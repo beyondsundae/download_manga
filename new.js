@@ -2,9 +2,20 @@ var fs = require('fs');
 const https = require('https')
 const axios = require('axios');
 var himalaya = require('himalaya')
-const util = require('util')
+const prompt = require('prompt');
 
 require('dotenv').config();
+
+function onErr(err) {
+  console.log(err);
+  return 1;
+}
+
+prompt.get(['link'], function (err, result) {
+  if (err) { return onErr(err); }
+  console.log('------------------------------------')
+  console.log('Link: ' + result.link);
+  console.log('------------------------------------')
 
 // console.log(process.env.pathToUpload);
 
@@ -20,12 +31,10 @@ const rootPath = process.argv[1].split( '\\' ).slice( 0, -1 ).join( '/' )
 
   }
 
-
-
   const getData = async () => {
     const config = {
       method: "get",
-      url: process.argv[2],
+      url: result.link,
       headers: {
         "Content-Type": "application/json",
       }
@@ -48,9 +57,9 @@ const rootPath = process.argv[1].split( '\\' ).slice( 0, -1 ).join( '/' )
 
   const StartDownload = async ( media_id, title, num_pages ) => {
     try {
-      const code_manga = '/' + process.argv[2].split( '/' )[4]
+      const code_manga = '/' + result.link.split( '/' )[4]
       console.log('------------------------------------')
-      console.log('URL: ', process.argv[2]); 
+      console.log('URL: ', result.link); 
       console.log('------------------------------------')
       console.log('code_manga: ', code_manga); 
 
@@ -63,7 +72,7 @@ const rootPath = process.argv[1].split( '\\' ).slice( 0, -1 ).join( '/' )
         console.log('created path:', rootPath.concat(code_manga) )
         console.log('------------------------------------')
 
-        let titleFile = title.english + "_" + process.argv[2].split( '/' )[4]
+        let titleFile = title.english.replace("|", "") + "_" + result.link.split( '/' )[4]
 
         for(let i = 1; i<= num_pages; i++){
           // const type = url.substring(url.lastIndexOf(".") + 1);
@@ -104,6 +113,9 @@ const rootPath = process.argv[1].split( '\\' ).slice( 0, -1 ).join( '/' )
             await timer(500)
           }
 
+          console.log('------------------------------------')
+          console.log('Done');
+          console.log('------------------------------------')
          
       }else{
         console.log('-------------- Already downloaded ---------------')
@@ -132,7 +144,7 @@ const rootPath = process.argv[1].split( '\\' ).slice( 0, -1 ).join( '/' )
   }
 
 
-  if(process.argv[2]){
+  if(result.link){
     StartProcess()
     
   }else{
@@ -140,7 +152,7 @@ const rootPath = process.argv[1].split( '\\' ).slice( 0, -1 ).join( '/' )
   }
  
 
-  
+});
 
   const downloadFile = async (url, uuid_generated, asset_group_id, asset_type_id, document_id, temp_filename, zoneId) => {
     if (url.charAt(url.length - 1) === "/") {
