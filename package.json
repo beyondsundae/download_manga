@@ -1,0 +1,25 @@
+{
+  "name": "download_manga",
+  "version": "1.0.0",
+  "description": "",
+  "main": "config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beyondsundae/download_manga.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/beyondsundae/download_manga/issues"
+  },
+  "homepage": "https://github.com/beyondsundae/download_manga#readme",
+  "dependencies": {
+    "axios": "^0.24.0",
+    "dotenv": "^10.0.0",
+    "himalaya": "^1.1.0"
+   
+  }
+}
