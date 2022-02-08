@@ -3,6 +3,7 @@ const https = require('https')
 const axios = require('axios');
 var himalaya = require('himalaya')
 const prompt = require('prompt');
+var _ = require('lodash');
 
 require('dotenv').config();
 
@@ -11,10 +12,32 @@ function onErr(err) {
   return 1;
 }
 
-prompt.get(['link'], function (err, result) {
+
+function formatBytes(bytes) {
+  bytes = _.isNil(bytes) ? 0 : bytes
+  var marker = 1024; // Change to 1000 if required
+  var decimal = 2; // Change as required
+  var kiloBytes = marker; // One Kilobyte is 1024 bytes
+  var megaBytes = marker * marker; // One MB is 1024 KB
+  var gigaBytes = marker * marker * marker; // One GB is 1024 MB
+  var teraBytes = marker * marker * marker * marker; // One TB is 1024 GB
+
+  if(bytes < megaBytes) return(bytes / kiloBytes).toFixed(decimal) + " KB";
+  // return MB if less than a GB
+  else if(bytes < gigaBytes) return(bytes / megaBytes).toFixed(decimal) + " MB";
+  // return GB if less than a TB
+  else return(bytes / gigaBytes).toFixed(decimal) + " GB";
+}
+
+let headerLink = 'https://nhentai.net/g/'
+let Manga_URL
+
+prompt.get(['Link'], function (err, result) {
   if (err) { return onErr(err); }
+
+  Manga_URL = headerLink + result.Link
   console.log('------------------------------------')
-  console.log('Link: ' + result.link);
+  console.log('Link: ' + Manga_URL);
   console.log('------------------------------------')
 
 // console.log(process.env.pathToUpload);
@@ -23,7 +46,7 @@ prompt.get(['link'], function (err, result) {
 //   if (err) throw err;
 //   console.log('Saved!');
 // });
-const url = "https://i.nhentai.net/galleries/"
+const url = process.env.URL_HEADER
 const rootPath = process.argv[1].split( '\\' ).slice( 0, -1 ).join( '/' )
 
   if(process.argv[1]){
@@ -34,7 +57,7 @@ const rootPath = process.argv[1].split( '\\' ).slice( 0, -1 ).join( '/' )
   const getData = async () => {
     const config = {
       method: "get",
-      url: result.link,
+      url: Manga_URL,
       headers: {
         "Content-Type": "application/json",
       }
@@ -57,14 +80,14 @@ const rootPath = process.argv[1].split( '\\' ).slice( 0, -1 ).join( '/' )
 
   const StartDownload = async ( media_id, title, num_pages ) => {
     try {
-      const code_manga = '/' + result.link.split( '/' )[4]
+      const code_manga = '/' + Manga_URL.split( '/' )[4]
       console.log('------------------------------------')
-      console.log('URL: ', result.link); 
+      console.log('URL: ', Manga_URL); 
       console.log('------------------------------------')
       console.log('code_manga: ', code_manga); 
 
       let path2 = null
-      const type = 'jpg'
+      const type = process.env.TYPE
 
       if (!fs.existsSync(rootPath.concat(code_manga))) { //check if empty
         fs.mkdirSync(rootPath.concat(code_manga));
@@ -72,7 +95,7 @@ const rootPath = process.argv[1].split( '\\' ).slice( 0, -1 ).join( '/' )
         console.log('created path:', rootPath.concat(code_manga) )
         console.log('------------------------------------')
 
-        let titleFile = title.english.replace("|", "") + "_" + result.link.split( '/' )[4]
+        let titleFile = title.english.replace("|", "") + "_" + Manga_URL.split( '/' )[4]
 
         for(let i = 1; i<= num_pages; i++){
           // const type = url.substring(url.lastIndexOf(".") + 1);
@@ -84,19 +107,19 @@ const rootPath = process.argv[1].split( '\\' ).slice( 0, -1 ).join( '/' )
 
           const final_url = `${url}${media_id}/${i}.${type}` 
 
-          // let checksizefile = {
-          //   method: "get",
-          //   url: `${final_url}`, // ยิงไป gis 
-          //   headers: {
-          //     "Content-Type": "application/json",
-          //     // "access_token": req.body.user.accessToken,
-          //   },
-          //   // data: body, // json ใบคำขอ   starter pack
-          // };
+          let checksizefile = {
+            method: "get",
+            url: `${final_url}`, // ยิงไป gis 
+            headers: {
+              "Content-Type": "application/json",
+              // "access_token": req.body.user.accessToken,
+            },
+            // data: body, // json ใบคำขอ   starter pack
+          };
 
-          // sizeFile = await axios(checksizefile);
-          // sizeFile = sizeFile.headers['content-length']
-          console.log('sizeFile', final_url)
+          sizeFile = await axios(checksizefile);
+          sizeFile = sizeFile.headers['content-length']
+          console.log('sizeFile', final_url, formatBytes(sizeFile))
 
           https
             .get(final_url, function (response) {
@@ -118,10 +141,13 @@ const rootPath = process.argv[1].split( '\\' ).slice( 0, -1 ).join( '/' )
           console.log('------------------------------------')
          
       }else{
-        console.log('-------------- Already downloaded ---------------')
+        console.log('------------------------------------')
+        console.log('Already Download');
+         console.log('------------------------------------')
       }
     
       } catch (error) {
+        console.log('error: ', error.response.status, 'statusText: ', error.response.statusText)
         
       }
   }
@@ -129,6 +155,7 @@ const rootPath = process.argv[1].split( '\\' ).slice( 0, -1 ).join( '/' )
   const StartProcess = async () => {
     try {  
         const jsonRes = await getData()
+        // console.log('jsonRes', jsonRes)
         const { media_id, title, num_pages  } = jsonRes
         console.log('------------------------------------')
         console.log('title >>>>', title)
@@ -144,7 +171,7 @@ const rootPath = process.argv[1].split( '\\' ).slice( 0, -1 ).join( '/' )
   }
 
 
-  if(result.link){
+  if(Manga_URL){
     StartProcess()
     
   }else{
@@ -153,6 +180,14 @@ const rootPath = process.argv[1].split( '\\' ).slice( 0, -1 ).join( '/' )
  
 
 });
+
+
+// echo "################################################################"
+// echo "# nhentai One key downloader                                   #"
+// echo "# Author: Jindai Kirin                                         #"
+// echo "# Github: https://github.com/YKilin/nhentai-one-key-downloader #"
+// echo "# Blog  : https://lolico.moe                                   #"
+// echo "################################################################"
 
   const downloadFile = async (url, uuid_generated, asset_group_id, asset_type_id, document_id, temp_filename, zoneId) => {
     if (url.charAt(url.length - 1) === "/") {
