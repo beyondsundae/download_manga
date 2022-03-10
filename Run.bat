@@ -1,6 +1,6 @@
 echo off
 cls
 :start
-node new.js
+node download_process.js
 pause
 goto start
